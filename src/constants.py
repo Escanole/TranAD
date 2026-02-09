@@ -13,6 +13,9 @@ lm_d = {
 		'WADI': [(0.99, 1), (0.999, 1)],
 		'MSDS': [(0.91, 1), (0.9, 1.04)],
 		'MBA': [(0.87, 1), (0.93, 1.04)],
+		'Gesture2D': [(0.99, 1.0), (0.995, 1.0)],
+		'ECG': [(0.99, 1.0), (0.995, 1.0)],
+		'PSM': [(0.995, 1.0), (0.997, 1.0)],
 	}
 lm = lm_d[args.dataset][1 if 'TranAD' in args.model else 0]
 
@@ -28,6 +31,9 @@ lr_d = {
 		'UCR': 0.006, 
 		'NAB': 0.009, 
 		'MBA': 0.001, 
+		'Gesture2D': 0.001,
+		'ECG': 0.001,
+		'PSM': 0.001,
 	}
 lr = lr_d[args.dataset]
 
@@ -43,6 +49,9 @@ percentiles = {
 		'UCR': (98, 2),
 		'NAB': (98, 2),
 		'MBA': (99, 2),
+		'Gesture2D': (97, 50),
+		'ECG': (97, 50),
+		'PSM': (98, 200),
 	}
 percentile_merlin = percentiles[args.dataset][0]
 cvp = percentiles[args.dataset][1]
