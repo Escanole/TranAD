@@ -117,7 +117,7 @@ def bf_search(score, label, start, end=None, step_num=1, display_freq=1, verbose
     return m, m_t
 
 
-def pot_eval(init_score, score, label, q=1e-5, level=0.02):
+def pot_eval(init_score, score, label, q=1e-1, level=0.02):
     """
     Run POT method on given score.
     Args:
@@ -162,3 +162,53 @@ def pot_eval(init_score, score, label, q=1e-5, level=0.02):
         'threshold': pot_th,
         # 'pot-latency': p_latency
     }, np.array(pred)
+
+def brute_force_eval(score, label, n_steps=500):
+    """
+    Brute-force threshold search to maximize F1.
+
+    Args:
+        score (np.ndarray): anomaly scores on test set (T,)
+        label (np.ndarray): binary ground truth labels (T,)
+        n_steps (int): number of thresholds to evaluate
+
+    Returns:
+        dict: best metric result
+        np.ndarray: best prediction array
+    """
+    score = np.asarray(score).reshape(-1)
+    label = np.asarray(label).reshape(-1)
+
+    # search range
+    t_min = score.min()
+    t_max = score.max()
+    thresholds = np.linspace(t_min, t_max, n_steps)
+
+    best_f1 = -1
+    best_result = None
+    best_pred = None
+    best_th = None
+
+    for th in thresholds:
+        pred = (score > th).astype(int)
+        p_t = calc_point2point(pred, label)  # (f1, prec, rec, TP, TN, FP, FN, AUC)
+
+        f1 = p_t[0]
+        if f1 > best_f1:
+            best_f1 = f1
+            best_th = th
+            best_pred = pred
+            best_result = {
+                'f1': p_t[0],
+                'precision': p_t[1],
+                'recall': p_t[2],
+                'TP': p_t[3],
+                'TN': p_t[4],
+                'FP': p_t[5],
+                'FN': p_t[6],
+                'ROC/AUC': p_t[7],
+                'threshold': th,
+            }
+
+    return best_result, best_pred
+
