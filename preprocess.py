@@ -66,7 +66,7 @@ def load_data(dataset):
 		for file in ['train', 'test', 'labels']:
 			np.save(os.path.join(folder, f'{file}.npy'), eval(file))
 	elif dataset == 'SMD':
-		dataset_folder = 'data/SMD'
+		dataset_folder = '/kaggle/working/TranAD/data/SMD'
 		file_list = os.listdir(os.path.join(dataset_folder, "train"))
 		for filename in file_list:
 			if filename.endswith('.txt'):
@@ -74,7 +74,7 @@ def load_data(dataset):
 				s = load_and_save('test', filename, filename.strip('.txt'), dataset_folder)
 				load_and_save2('labels', filename, filename.strip('.txt'), dataset_folder, s)
 	elif dataset == 'UCR':
-		dataset_folder = 'data/UCR'
+		dataset_folder = '/kaggle/working/TranAD/data/UCR'
 		file_list = os.listdir(dataset_folder)
 		for filename in file_list:
 			if not filename.endswith('.txt'): continue
@@ -93,7 +93,7 @@ def load_data(dataset):
 			for file in ['train', 'test', 'labels']:
 				np.save(os.path.join(folder, f'{dnum}_{file}.npy'), eval(file))
 	elif dataset == 'NAB':
-		dataset_folder = 'data/NAB'
+		dataset_folder = '/kaggle/working/TranAD/data/NAB'
 		file_list = os.listdir(dataset_folder)
 		with open(dataset_folder + '/labels.json') as f:
 			labeldict = json.load(f)
@@ -114,7 +114,7 @@ def load_data(dataset):
 			for file in ['train', 'test', 'labels']:
 				np.save(os.path.join(folder, f'{fn}_{file}.npy'), eval(file))
 	elif dataset == 'MSDS':
-		dataset_folder = 'data/MSDS'
+		dataset_folder = '/kaggle/working/TranAD/data/MSDS'
 		df_train = pd.read_csv(os.path.join(dataset_folder, 'train.csv'))
 		df_test  = pd.read_csv(os.path.join(dataset_folder, 'test.csv'))
 		df_train, df_test = df_train.values[::5, 1:], df_test.values[::5, 1:]
@@ -126,7 +126,7 @@ def load_data(dataset):
 		for file in ['train', 'test', 'labels']:
 			np.save(os.path.join(folder, f'{file}.npy'), eval(file).astype('float64'))
 	elif dataset == 'SWaT':
-		dataset_folder = 'data/SWaT'
+		dataset_folder = '/kaggle/working/TranAD/data/SWaT'
 		file = os.path.join(dataset_folder, 'series.json')
 		df_train = pd.read_json(file, lines=True)[['val']][3000:6000]
 		df_test  = pd.read_json(file, lines=True)[['val']][7000:12000]
@@ -136,7 +136,7 @@ def load_data(dataset):
 		for file in ['train', 'test', 'labels']:
 			np.save(os.path.join(folder, f'{file}.npy'), eval(file))
 	elif dataset in ['SMAP', 'MSL']:
-		dataset_folder = 'data/SMAP_MSL'
+		dataset_folder = '/kaggle/working/TranAD/data/SMAP_MSL'
 		file = os.path.join(dataset_folder, 'labeled_anomalies.csv')
 		values = pd.read_csv(file)
 		values = values[values['spacecraft'] == dataset]
@@ -156,7 +156,7 @@ def load_data(dataset):
 				labels[indices[i]:indices[i+1], :] = 1
 			np.save(f'{folder}/{fn}_labels.npy', labels)
 	elif dataset == 'WADI':
-		dataset_folder = 'data/WADI'
+		dataset_folder = '/kaggle/working/TranAD/data/WADI'
 		ls = pd.read_csv(os.path.join(dataset_folder, 'WADI_attacklabels.csv'))
 		train = pd.read_csv(os.path.join(dataset_folder, 'WADI_14days.csv'), skiprows=1000, nrows=2e5)
 		test = pd.read_csv(os.path.join(dataset_folder, 'WADI_attackdata.csv'))
@@ -182,8 +182,98 @@ def load_data(dataset):
 		print(train.shape, test.shape, labels.shape)
 		for file in ['train', 'test', 'labels']:
 			np.save(os.path.join(folder, f'{file}.npy'), eval(file))
+	elif dataset == 'ECG':
+		dataset_folder = '/kaggle/working/TranAD/data/ECG'
+		ecg_id = args.ecg    # must be one of ECG_A ... ECG_F
+
+		src = os.path.join(dataset_folder, ecg_id)
+		folder = os.path.join(output_folder, dataset)
+		os.makedirs(folder, exist_ok=True)
+
+		scaler = StandardScaler()
+
+		train  = np.load(os.path.join(src, 'ECG_train.npy'))
+		test   = np.load(os.path.join(src, 'ECG_test.npy'))
+		labels = np.load(os.path.join(src, 'ECG_test_label.npy'))
+
+		scaler.fit(train)
+		train = scaler.transform(train)
+		test  = scaler.transform(test)
+
+		if labels.ndim == 1:
+			labels = labels[:, None]
+		labels = np.repeat(labels, train.shape[1], axis=1)
+
+		np.save(os.path.join(folder, 'train.npy'), train.astype(np.float64))
+		np.save(os.path.join(folder, 'test.npy'), test.astype(np.float64))
+		np.save(os.path.join(folder, 'labels.npy'), labels.astype(np.float64))
+	elif dataset == 'Gesture2D':
+		dataset_folder = '/kaggle/working/TranAD/data/2DGesture'
+		folder = os.path.join(output_folder, dataset)
+		os.makedirs(folder, exist_ok=True)
+
+		scaler = StandardScaler()
+
+		train = np.load(f"{dataset_folder}/2DGesture_train.npy")
+		test  = np.load(f"{dataset_folder}/2DGesture_test.npy")
+		labels = np.load(f"{dataset_folder}/2DGesture_test_label.npy")
+
+		scaler.fit(train)
+		train = scaler.transform(train)
+		test  = scaler.transform(test)
+
+		# FIX: (T,) → (T, D)
+		if labels.ndim == 1:
+			labels = labels[:, None]
+		labels = np.repeat(labels, train.shape[1], axis=1)
+
+		np.save(os.path.join(folder, 'train.npy'), train.astype(np.float64))
+		np.save(os.path.join(folder, 'test.npy'), test.astype(np.float64))
+		np.save(os.path.join(folder, 'labels.npy'), labels.astype(np.float64))
+
+	elif dataset == 'PSM':
+		dataset_folder = '/kaggle/working/TranAD/data/PSM'
+		folder = os.path.join(output_folder, dataset)
+		os.makedirs(folder, exist_ok=True)
+
+		# Load raw CSVs
+		train_df = pd.read_csv(os.path.join(dataset_folder, 'train.csv'))
+		test_df  = pd.read_csv(os.path.join(dataset_folder, 'test.csv'))
+		label_df = pd.read_csv(os.path.join(dataset_folder, 'test_label.csv'))
+
+		# Drop index column
+		train = train_df.values[:, 1:]
+		test  = test_df.values[:, 1:]
+		labels = label_df.values[:, 1:]
+
+		# NaN handling
+		train = np.nan_to_num(train)
+		test  = np.nan_to_num(test)
+		labels = np.nan_to_num(labels)
+
+		# MinMax scaling (fit on train only)
+		scaler = MinMaxScaler()
+		scaler.fit(train)
+		train = scaler.transform(train)
+		test  = scaler.transform(test)
+
+		# ---- CRITICAL PART (match ECG behavior) ----
+		# If labels are (T,), expand to (T, D)
+		if labels.ndim == 1:
+			labels = labels[:, None]
+
+		labels = np.repeat(labels, train.shape[1], axis=1)
+
+		# Type consistency
+		train  = train.astype(np.float64)
+		test   = test.astype(np.float64)
+		labels = labels.astype(np.float64)
+		
+		np.save(os.path.join(folder, 'train.npy'), train)
+		np.save(os.path.join(folder, 'test.npy'), test)
+		np.save(os.path.join(folder, 'labels.npy'), labels)
 	elif dataset == 'MBA':
-		dataset_folder = 'data/MBA'
+		dataset_folder = '/kaggle/working/TranAD/data/MBA'
 		ls = pd.read_excel(os.path.join(dataset_folder, 'labels.xlsx'))
 		train = pd.read_excel(os.path.join(dataset_folder, 'train.xlsx'))
 		test = pd.read_excel(os.path.join(dataset_folder, 'test.xlsx'))
